@@ -1,0 +1,96 @@
+version: "3.5"
+
+services:
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus-conf:/etc/prometheus
+      - ./prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: unless-stopped
+    privileged: true
+
+  grafana:
+    image: rappalini/grafana-sendmail:2.0
+#    image: rappalini/grafana-sendmail:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana-data:/var/lib/grafana
+      - ./grafana-conf:/usr/share/grafana/conf
+    user: root
+    restart: unless-stopped
+    privileged: true
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter
+    container_name: node_exporter
+    ports:
+      - 9100:9100
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
+    restart: unless-stopped
+    privileged: true
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    container_name: cadvisor
+    ports:
+      - 8989:8989
+    command:
+      - '-port=8989'
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    restart: unless-stopped
+    privileged: true
+
+  loki:
+    image: grafana/loki:2.6.0
+    container_name: loki
+    ports:
+      - 3100:3100
+    volumes:
+      - ./loki-data:/etc/loki
+    command: '-config.file=/etc/loki/local-config.yaml'
+    restart: unless-stopped
+    privileged: true
+
+  promtail:
+    image: grafana/promtail:2.6.0
+    container_name: promtail
+    volumes:
+      - ./promtail-data:/etc/promtail
+      - /var/log:/var/log
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: '-config.file=/etc/promtail/config.yml'
+    restart: unless-stopped
+    privileged: true
+
+  prometheus_alertmanager:
+    image: prom/alertmanager:latest
+    container_name: prom_alertmanager
+    volumes:
+      - ./prom_alertmanager-data:/etc/alertmanager
+    ports:
+      - 9093:9093
+    restart: unless-stopped
+    privileged: true
+    networks:
+      mi_network:
+        ipv4_address: 10.0.0.16
+# docker run --name prom_alertmanager -d -p 127.0.0.1:9093:9093 quay.io/prometheus/alertmanager

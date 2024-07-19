@@ -1,0 +1,28 @@
+
+global:
+  
+  scrape_interval:     10s # By default, scrape targets every 15 seconds.
+
+  # Attach these labels to any time series or alerts when communicating with external systems (Remote storage, Alertmanager).
+  # external_labels:
+  # monitor: 'Monitor-Infra'
+
+scrape_configs:
+
+###############################################################################
+
+  # MONITOREO LOCAL:
+
+  - job_name: 'prometheus_LOCAL'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'nodexp_LOCAL'
+    static_configs:
+      - targets: ['node_exporter:9100']
+
+  - job_name: 'cadv_LOCAL'
+    static_configs:
+      - targets: ['cadvisor:8989']
+
